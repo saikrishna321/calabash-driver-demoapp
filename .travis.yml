@@ -1,30 +1,32 @@
 language: java
-
-notifications:
-  email: false
-  
-branches:
-  only:
-    - master
-
+jdk: oraclejdk7
+env:
+    matrix:
+    - ANDROID_SDKS=android-8            ANDROID_TARGET=android-8   ANDROID_ABI=armeabi
+    - ANDROID_SDKS=android-10           ANDROID_TARGET=android-10  ANDROID_ABI=armeabi
+    - ANDROID_SDKS=sysimg-16            ANDROID_TARGET=android-16  ANDROID_ABI=armeabi-v7a
+    - ANDROID_SDKS=android-17,sysimg-17 ANDROID_TARGET=android-17  ANDROID_ABI=armeabi-v7a
 before_install:
-  - sudo apt-get update -qq
-  - if [ `uname -m` = x86_64 ]; then sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch > /dev/null; fi
-  - wget http://dl.google.com/android/android-sdk_r21-linux.tgz
-  - tar -zxf android-sdk_r21-linux.tgz
-  - export ANDROID_HOME=`pwd`/android-sdk-linux
-  - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
-  - android update sdk --filter platform-tools,android-16 --no-ui --force #,android-10,sysimg-16
-# - echo no | android create avd -n emulator16Uk -t android-16 --skin 320x480 --abi x86 --force
--gem install calabash-android
-before_script:
- - "export DISPLAY=:99.0"
- - "sh -e /etc/init.d/xvfb start"
- - sleep 3 # give xvfb some time to start
- - emulator -avd emulator16Uk -prop persist.sys.language=en -prop persist.sys.country=UK -noaudio -no-boot-anim &
- - sleep 5 # give the emulator some time to start, otherwise the script will fail
- - ./wait_for_emulator.sh
+    # Install Calabash Gem
+	- gem install calabash-android
+    # Install base Android SDK
+    - sudo apt-get update -qq
+    - if [ `uname -m` = x86_64 ]; then sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch; fi
+    - wget http://dl.google.com/android/android-sdk_r21.0.1-linux.tgz
+    - tar xzf android-sdk_r21.0.1-linux.tgz
+    - export ANDROID_HOME=$PWD/android-sdk-linux
+    - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
+    # Install required Android components.
+    - android update sdk --filter platform-tools,android-16,extra-android-support,$ANDROID_SDKS --no-ui --force
+
+    # Create and start emulator
+    - echo no | android create avd --force -n test -t $ANDROID_TARGET --abi $ANDROID_ABI
+    - emulator -avd test -no-skin -no-audio -no-window &
+  
+before_script:
+    # Make sure the emulator has started before running tests
+    - ./wait_for_emulator
 #script:
  - mvn install
  - adb kill-server
