@@ -29,8 +29,7 @@ before_script:
     - chmod +x wait_for_emulator
     - ./wait_for_emulator
 script:
- - mvn install
  - adb kill-server
  - adb start-server
- - adb devices  - adb install -r target/calabash-driver-demoapp-1.0-SNAPSHOT.apk
-  - calabash-android run target/calabash-driver-demoapp-1.0-SNAPSHOT.apk
+ - adb devices  - adb install -r apk/com.tesco.newgrocery.view-Aligned.apk
+  - calabash-android run target/com.tesco.newgrocery.view-Aligned.apk
